@@ -72,7 +72,10 @@ class Scrobbler():
                     epIndex = self._currentEpisode(
                         watchedPercent, self.curVideo['multi_episode_count'])
                     if self.curMPEpisode != epIndex:
-                        response = self.__scrobble('stop')
+                        if watchedPercent >= kodiUtilities.getSettingAsFloat("rate_min_view_time"):
+                            response = self.__scrobble('stop')
+                        else:
+                            response = self.__scrobble('pause')
                         if response is not None:
                             logger.debug("Scrobble response: %s" %
                                          str(response))
@@ -102,7 +105,10 @@ class Scrobbler():
                         type, curVideo = kodiUtilities.getInfoLabelDetails(
                             result)
                         if curVideo != self.curVideo:
-                            response = self.__scrobble('stop')
+                            if watchedPercent >= kodiUtilities.getSettingAsFloat("rate_min_view_time"):
+                                response = self.__scrobble('stop')
+                            else:
+                                response = self.__scrobble('pause')
                             if response is not None:
                                 logger.debug("Scrobble response: %s" %
                                              str(response))
@@ -344,6 +350,7 @@ class Scrobbler():
             return
 
         logger.debug("playbackEnded()")
+        watchedPercent = self.__calculateWatchedPercent()
         if not self.videosToRate and not self.isPVR:
             logger.debug("Warning: Playback ended but video forgotten.")
             return
@@ -351,7 +358,10 @@ class Scrobbler():
         self.stopScrobbler = False
         if self.watchedTime != 0:
             if 'type' in self.curVideo:
-                self.__scrobble('stop')
+                if watchedPercent >= kodiUtilities.getSettingAsFloat("rate_min_view_time"):
+                    self.__scrobble('stop')
+                else:
+                    self.__scrobble('pause')
                 ratingCheck(
                     self.curVideo['type'], self.videosToRate, self.watchedTime, self.videoDuration)
             self.watchedTime = 0
