@@ -401,6 +401,16 @@ def compareEpisodes(shows_col1, shows_col2, matchByTitleAndYear, watched=False, 
                 show_col1, shows_col2['shows'], matchByTitleAndYear)
             # logger.debug("show_col1 %s" % show_col1)
             # logger.debug("show_col2 %s" % show_col2)
+            #if 'reset_at' in show_col1:
+            #    logger.debug("show_col1 reset_at: %s" % show_col1['reset_at'])
+            reset_at = None
+            if 'reset_at' in show_col1:
+                reset_at = show_col1['reset_at']
+            else:
+                reset_at = None
+                
+            logger.debug("show: %s" % show_col1['title'])
+            logger.debug("reset_at: %s" % reset_at)
 
             if show_col2:
                 season_diff = {}
@@ -484,6 +494,9 @@ def compareEpisodes(shows_col1, shows_col2, matchByTitleAndYear, watched=False, 
                     for seasonKey in season_diff:
                         episodes = []
                         for episodeKey in season_diff[seasonKey]:
+                            episode = season_diff[seasonKey][episodeKey]
+                            if reset_at and reset_at > convertUtcToDateTime(episode['last_watched_at']):
+                                episode['plays'] = 0
                             episodes.append(season_diff[seasonKey][episodeKey])
                         show['seasons'].append(
                             {'number': seasonKey, 'episodes': episodes})
@@ -501,7 +514,7 @@ def compareEpisodes(shows_col1, shows_col2, matchByTitleAndYear, watched=False, 
                         for seasonKey in show_col1['seasons']:
                             episodes = []
                             for episodeKey in seasonKey['episodes']:
-                                if watched and (episodeKey['watched'] == 1):
+                                if watched and (episodeKey['watched'] == 1) and (not reset_at or convertUtcToDateTime(episodeKey['last_watched_at']) > reset_at):
                                     episodes.append(episodeKey)
                                 elif rating and episodeKey['rating'] != 0:
                                     episodes.append(episodeKey)
